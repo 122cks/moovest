@@ -5,6 +5,7 @@
  * 프론트엔드: IS_PROD 환경에서 이 엔드포인트로 요청을 보냅니다.
  *
  * 배포: firebase deploy --only functions
+ * CI 트리거: functions/** 변경 시 GitHub Actions에서 시크릿 동기화+배포 자동 실행
  */
 
 const { onRequest } = require('firebase-functions/v2/https')

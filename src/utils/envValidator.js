@@ -3,12 +3,19 @@
  * 누락 시 콘솔에 명시적 에러를 출력하고 예외를 던집니다.
  */
 const REQUIRED_VARS = [
-  { key: 'VITE_GEMINI_API_KEY', label: 'Gemini API 키' },
   { key: 'VITE_FIREBASE_API_KEY', label: 'Firebase API 키' },
 ]
 
+const DEV_ONLY_VARS = [
+  { key: 'VITE_GEMINI_API_KEY', label: 'Gemini API 키' },
+]
+
 export function validateEnv() {
-  const missing = REQUIRED_VARS.filter(
+  const requiredVars = import.meta.env.DEV
+    ? [...REQUIRED_VARS, ...DEV_ONLY_VARS]
+    : REQUIRED_VARS
+
+  const missing = requiredVars.filter(
     ({ key }) => !import.meta.env[key] || import.meta.env[key] === `your_${key.toLowerCase()}_here`
   )
 

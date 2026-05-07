@@ -27,10 +27,6 @@ jobs:
 
             - name: Validate Required Secrets
               run: |
-                  if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
-                    echo "ERROR: GEMINI_API_KEY secret is not set"
-                    exit 1
-                  fi
                   if [ -z "${{ secrets.VITE_FIREBASE_API_KEY }}" ]; then
                     echo "ERROR: VITE_FIREBASE_API_KEY secret is not set"
                     exit 1
@@ -43,8 +39,6 @@ jobs:
             - name: Build Project
               run: npm run build
               env:
-                  # GitHub Secret → Vite 환경 변수로 주입
-                  VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
                   VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
 
             - name: Upload build artifact

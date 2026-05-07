@@ -1,0 +1,94 @@
+name: Build & Deploy to Firebase Hosting
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    build:
+        name: Build
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Node.js 20
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+                  cache: "npm"
+
+            - name: Install Dependencies
+              run: npm ci
+
+            - name: Validate Required Env Vars
+              run: |
+                  if [ -z "${{ secrets.MOOVEST }}" ]; then
+                    echo "ERROR: MOOVEST secret is not set"
+                    exit 1
+                  fi
+
+            - name: Build Project
+              run: npm run build
+              env:
+                  # GitHub Secret → Vite 환경 변수로 주입
+                  VITE_GEMINI_API_KEY: ${{ secrets.MOOVEST }}
+                  VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+
+            - name: Upload build artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: dist
+                  path: dist/
+                  retention-days: 1
+
+    deploy:
+        name: Deploy to Firebase Hosting
+        needs: build
+        runs-on: ubuntu-latest
+        # PR은 미리보기 배포, main 푸시는 프로덕션 배포
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Download build artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: dist
+                  path: dist/
+
+            - name: Deploy to Firebase Hosting (Production)
+              uses: FirebaseExtended/action-hosting-deploy@v0
+              with:
+                  repoToken: ${{ secrets.GITHUB_TOKEN }}
+                  firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+                  channelId: live
+                  projectId: moovest
+
+    preview:
+        name: Deploy Preview (PR only)
+        needs: build
+        runs-on: ubuntu-latest
+        if: github.event_name == 'pull_request'
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Download build artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: dist
+                  path: dist/
+
+            - name: Deploy Preview Channel
+              uses: FirebaseExtended/action-hosting-deploy@v0
+              with:
+                  repoToken: ${{ secrets.GITHUB_TOKEN }}
+                  firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+                  projectId: moovest
+                  # PR마다 고유 미리보기 URL 생성

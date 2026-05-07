@@ -25,10 +25,18 @@ jobs:
             - name: Install Dependencies
               run: npm ci
 
-            - name: Validate Required Env Vars
+            - name: Validate Required Secrets
               run: |
-                  if [ -z "${{ secrets.MOOVEST }}" ]; then
-                    echo "ERROR: MOOVEST secret is not set"
+                  if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
+                    echo "ERROR: GEMINI_API_KEY secret is not set"
+                    exit 1
+                  fi
+                  if [ -z "${{ secrets.VITE_FIREBASE_API_KEY }}" ]; then
+                    echo "ERROR: VITE_FIREBASE_API_KEY secret is not set"
+                    exit 1
+                  fi
+                  if [ -z "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" ]; then
+                    echo "ERROR: FIREBASE_SERVICE_ACCOUNT secret is not set"
                     exit 1
                   fi
 
@@ -36,7 +44,7 @@ jobs:
               run: npm run build
               env:
                   # GitHub Secret → Vite 환경 변수로 주입
-                  VITE_GEMINI_API_KEY: ${{ secrets.MOOVEST }}
+                  VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
                   VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
 
             - name: Upload build artifact
